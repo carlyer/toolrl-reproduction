@@ -1,0 +1,30 @@
+diff --git a/verl/trainer/config/ppo_trainer.yaml b/verl/trainer/config/ppo_trainer.yaml
+index 671615b..898ae78 100644
+--- a/verl/trainer/config/ppo_trainer.yaml
++++ b/verl/trainer/config/ppo_trainer.yaml
+@@ -152,6 +152,7 @@ trainer:
+   logger: [ 'console', 'wandb' ]
+   nnodes: 1
+   n_gpus_per_node: 8
++  save_final_checkpoint: False
+   save_freq: -1
+   test_freq: -1
+   critic_warmup: 0
+diff --git a/verl/trainer/ppo/ray_trainer.py b/verl/trainer/ppo/ray_trainer.py
+index 3181125..ccdc2f4 100644
+--- a/verl/trainer/ppo/ray_trainer.py
++++ b/verl/trainer/ppo/ray_trainer.py
+@@ -721,8 +721,11 @@ class RayPPOTrainer(object):
+                             val_metrics: dict = self._validate()
+                         metrics.update(val_metrics)
+ 
+-                    if self.config.trainer.save_freq > 0 and \
+-                            self.global_steps % self.config.trainer.save_freq == 0:
++                    periodic_save = (self.config.trainer.save_freq > 0 and
++                                     self.global_steps % self.config.trainer.save_freq == 0)
++                    final_save = (self.config.trainer.get("save_final_checkpoint", False) and
++                                  self.global_steps + 1 >= self.total_training_steps)
++                    if periodic_save or final_save:
+                         with _timer('save_checkpoint', timing_raw):
+                             self._save_checkpoint()
+ 

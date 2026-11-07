@@ -1,0 +1,60 @@
+{
+  "stage": "training_api_bank_bfcl_complete_bamboogle_unavailable",
+  "updated_utc": "2026-10-12T12:45:29.867179+00:00",
+  "metrics_reproduced": false,
+  "api_bank": {
+    "benchmark": "API-Bank",
+    "samples": 597,
+    "raw_accuracy": 0.3333333333333333,
+    "grpo_accuracy": 0.542713567839196,
+    "gain_percentage_points": 20.938023450586268,
+    "author_scoring_parity_all_predictions": true,
+    "paper_metrics_reproduced": false
+  },
+  "bfcl": {
+    "benchmark": "BFCL V3",
+    "benchmark_commit": "ea13468e4423454d0c213704fb87cf7cb3990433",
+    "samples_per_model": 4441,
+    "official_checker_completed": true,
+    "metrics": {
+      "Overall Acc": {
+        "base_percent": 39.87,
+        "grpo_percent": 53.97,
+        "gain_percentage_points": 14.1
+      },
+      "Non-Live AST Acc": {
+        "base_percent": 45.1,
+        "grpo_percent": 83.17,
+        "gain_percentage_points": 38.07
+      },
+      "Live Acc": {
+        "base_percent": 64.15,
+        "grpo_percent": 71.88,
+        "gain_percentage_points": 7.73
+      },
+      "Multi Turn Acc": {
+        "base_percent": 1.62,
+        "grpo_percent": 5.25,
+        "gain_percentage_points": 3.63
+      },
+      "Relevance Detection": {
+        "base_percent": 66.67,
+        "grpo_percent": 83.33,
+        "gain_percentage_points": 16.66
+      },
+      "Irrelevance Detection": {
+        "base_percent": 79.86,
+        "grpo_percent": 84.85,
+        "gain_percentage_points": 4.99
+      }
+    },
+    "context_budget_failures": {
+      "base": 55,
+      "grpo": 25
+    },
+    "infrastructure_errors": 0,
+    "context_budget_failure_policy": "retained as task failures, never omitted",
+    "source_metrics_precision": "official leaderboard rounded to 2 decimal percent",
+    "paper_exact_metrics_reproduced": false
+  }
+}

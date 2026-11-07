@@ -1,0 +1,59 @@
+diff --git a/verl/trainer/config/ppo_trainer.yaml b/verl/trainer/config/ppo_trainer.yaml
+index 671615b..898ae78 100644
+--- a/verl/trainer/config/ppo_trainer.yaml
++++ b/verl/trainer/config/ppo_trainer.yaml
+@@ -152,6 +152,7 @@ trainer:
+   logger: [ 'console', 'wandb' ]
+   nnodes: 1
+   n_gpus_per_node: 8
++  save_final_checkpoint: False
+   save_freq: -1
+   test_freq: -1
+   critic_warmup: 0
+diff --git a/verl/trainer/ppo/ray_trainer.py b/verl/trainer/ppo/ray_trainer.py
+index 3181125..ccdc2f4 100644
+--- a/verl/trainer/ppo/ray_trainer.py
++++ b/verl/trainer/ppo/ray_trainer.py
+@@ -721,8 +721,11 @@ class RayPPOTrainer(object):
+                             val_metrics: dict = self._validate()
+                         metrics.update(val_metrics)
+ 
+-                    if self.config.trainer.save_freq > 0 and \
+-                            self.global_steps % self.config.trainer.save_freq == 0:
++                    periodic_save = (self.config.trainer.save_freq > 0 and
++                                     self.global_steps % self.config.trainer.save_freq == 0)
++                    final_save = (self.config.trainer.get("save_final_checkpoint", False) and
++                                  self.global_steps + 1 >= self.total_training_steps)
++                    if periodic_save or final_save:
+                         with _timer('save_checkpoint', timing_raw):
+                             self._save_checkpoint()
+ 
+diff --git a/verl/utils/reward_score/rlla.py b/verl/utils/reward_score/rlla.py
+index bbad2cb..300312c 100644
+--- a/verl/utils/reward_score/rlla.py
++++ b/verl/utils/reward_score/rlla.py
+@@ -254,7 +254,7 @@ def customize_correctness_reward_tool(completions, answer, step, max_possible_re
+     return rewards
+ 
+ 
+-def compute_score(solution_str, ground_truth, step=0):
++def _compute_score_verbose(solution_str, ground_truth, step=0):
+     """The scoring function for GSM8k.
+ 
+     Reference: Trung, Luong, et al. "Reft: Reasoning with reinforced fine-tuning." Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). 2024.
+@@ -303,4 +303,13 @@ def compute_score(solution_str, ground_truth, step=0):
+     score = fomrat_score + correctness_score + length_score
+     
+     return score, fomrat_score, correctness_score, length_score
+-    
+\ No newline at end of file
++    
++
++def compute_score(solution_str, ground_truth, step=0):
++    # Keep identical scores while avoiding full response dumps in every training step.
++    if os.getenv("TOOLRL_DEBUG_REWARD", "0") == "1":
++        return _compute_score_verbose(solution_str, ground_truth, step)
++    import contextlib
++    import io
++    with contextlib.redirect_stdout(io.StringIO()):
++        return _compute_score_verbose(solution_str, ground_truth, step)

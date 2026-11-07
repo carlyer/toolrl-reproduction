@@ -1,0 +1,7 @@
+{
+  "name": "toolrl",
+  "repository": "https://github.com/qiancheng0/ToolRL",
+  "paper": "https://arxiv.org/abs/2504.13958",
+  "commit": "8cee13ec0ca72f0461da372a93a6fd8140dbb840",
+  "metrics_reproduced": false
+}

@@ -1,0 +1,14 @@
+Research portfolio export
+
+Local training, data conversion, evaluation, and experiment analysis are
+packaged from the completed local research workspace. Original paper methods
+and upstream implementations are attributed in docs/references.md.
+
+No model weights or third-party datasets are redistributed. Upstream projects
+are fetched separately at recorded revisions and retain their original licenses.
+Local adaptations are identified in docs/reproducibility.md. Historical aggregate
+results predate this public packaging; public packaging checks are not new GPU runs.
+
+The BFCL RLLA handler in adapters/bfcl/rlla_qwen.py is adapted from the
+Apache-2.0 official ToolRL handler, with namespace and per-request dialogue
+changes for the pinned BFCL V3 interface.

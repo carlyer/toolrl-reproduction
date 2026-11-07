@@ -1,0 +1,53 @@
+diff --git a/berkeley-function-call-leaderboard/bfcl_eval/constants/model_config.py b/berkeley-function-call-leaderboard/bfcl_eval/constants/model_config.py
+index e332d00..99a2912 100644
+--- a/berkeley-function-call-leaderboard/bfcl_eval/constants/model_config.py
++++ b/berkeley-function-call-leaderboard/bfcl_eval/constants/model_config.py
+@@ -2042,3 +2042,11 @@ MODEL_CONFIG_MAPPING = {
+     **local_inference_model_map,
+     **third_party_inference_model_map,
+ }
++
++# Local ToolRL adapter; prompts/decoding copied from the author's pinned source.
++from bfcl_eval.model_handler.local_inference.rlla_qwen import RLLAHandler
++for _arm in ('base', 'grpo'):
++    MODEL_CONFIG_MAPPING['toolrl-' + _arm] = ModelConfig(
++        model_name='toolrl-' + _arm, display_name='ToolRL ' + _arm,
++        url='https://github.com/qiancheng0/ToolRL', org='local-reproduction',
++        license='research', model_handler=RLLAHandler, is_fc_model=False)
+diff --git a/berkeley-function-call-leaderboard/bfcl_eval/eval_checker/eval_runner.py b/berkeley-function-call-leaderboard/bfcl_eval/eval_checker/eval_runner.py
+index 0ac9bd7..c3fb360 100644
+--- a/berkeley-function-call-leaderboard/bfcl_eval/eval_checker/eval_runner.py
++++ b/berkeley-function-call-leaderboard/bfcl_eval/eval_checker/eval_runner.py
+@@ -73,6 +73,8 @@ def multi_turn_runner(
+                     "possible_answer": multi_turn_ground_truth_list,
+                 }
+             )
++            # Failed inference is one failed task, never decode an error string.
++            continue
+         # Check if force-terminated during inference phase.
+         # This happens when the model has retried too many times and still haven't figured out the answer.
+         # When force-terminated, no further evaluation is needed. This whole entry will be failed.
+diff --git a/berkeley-function-call-leaderboard/bfcl_eval/model_handler/local_inference/base_oss_handler.py b/berkeley-function-call-leaderboard/bfcl_eval/model_handler/local_inference/base_oss_handler.py
+index e26dd8a..1279a96 100644
+--- a/berkeley-function-call-leaderboard/bfcl_eval/model_handler/local_inference/base_oss_handler.py
++++ b/berkeley-function-call-leaderboard/bfcl_eval/model_handler/local_inference/base_oss_handler.py
+@@ -325,12 +325,15 @@ class OSSHandler(BaseHandler, EnforceOverrides):
+         input_token_count = len(self.tokenizer.tokenize(formatted_prompt))
+ 
+         # Determine the number of tokens to request. Cap it at 4096 if the model has a larger limit.
+-        if self.max_context_length < input_token_count + 2:
+-            # If the prompt is already at the max length, just request 1000 token, we will get an error anyway
+-            leftover_tokens_count = 1000
++        if self.max_context_length <= input_token_count + 2:
++            # Explicit task-budget termination; no truncation and no invalid HTTP request.
++            raise RuntimeError(
++                f"TOOLRL_CONTEXT_BUDGET_EXHAUSTED: input={input_token_count}, "
++                f"limit={self.max_context_length}"
++            )
+         else:
+             leftover_tokens_count = min(
+-                4096,
++                getattr(self, 'max_generation_tokens', 4096),
+                 self.max_context_length - input_token_count - 2,
+             )
+ 
